@@ -1,39 +1,46 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import './App.css';
 import axios from 'axios';
 import Search from './components/Search';
 import MovieList from './components/MovieList';
 import Movies from './components/Movies';
-import { FaSpinner } from 'react-icons/fa'; 
+import { FaSpinner } from 'react-icons/fa';
 
 function App() {
   const [movies, setMovies] = useState([]);
   const [selectedMovie, setSelectedMovie] = useState(null);
   const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [loading, setLoading] = useState(false); 
-  const [error, setError] = useState(null); 
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
-  const fetchMovies = async (query) => {
+  const fetchMovies = useCallback(async (query = '') => {
     setLoading(true);
     setError(null);
     const apiKey = '16e93d5b';
-    const url = query
-      ? `https://www.omdbapi.com/?s=${query}&apikey=${apiKey}`
+  
+    const trimmedQuery = query.trim();
+    const url = trimmedQuery
+      ? `https://www.omdbapi.com/?s=${trimmedQuery}&apikey=${apiKey}`
       : `https://www.omdbapi.com/?s=marvel&apikey=${apiKey}`;
 
     try {
       const response = await axios.get(url);
       if (response.data.Search) {
         setMovies(response.data.Search);
+        setError(null);
       } else {
         setError('No movies found!');
+        if (trimmedQuery) {
+          setMovies([]);
+        }
       }
     } catch (err) {
       setError('Failed to fetch movies. Please try again later.');
+      setMovies([]);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   const fetchMovieDetails = async (id) => {
     setLoading(true);
@@ -54,7 +61,7 @@ function App() {
 
   useEffect(() => {
     fetchMovies();
-  }, []);
+  }, [fetchMovies]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-gray-800 text-white">
